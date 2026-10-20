@@ -43,22 +43,27 @@ def build_buildings(cfg: GeeConfig, sections: ee.FeatureCollection) -> ee.Featur
          .filter(ee.Filter.gte("confidence", cfg.MIN_CONF))
          .filter(ee.Filter.gte("area_in_meters", cfg.MIN_AREA_M2)))
 
-    # nearest road section within ZONE_C_M; measureKey stores that distance (metres)
+    # nearest road section within ZONE_C_M; measureKey stores that distance (metres) on the matched feature
     near = ee.Filter.withinDistance(distance=zone_c, leftField=".geo", rightField=".geo", maxError=1)
     joined = ee.Join.saveBest(matchKey="sec", measureKey="dist_m").apply(b, sections, near)
+    matched = joined.filter(ee.Filter.notNull(["sec"]))
 
     a, bb = cfg.ZONE_A_M, cfg.ZONE_B_M
 
     def tag(f):
-        f = ee.Feature(f)
-        d = ee.Number(f.get("dist_m"))
+        sec = ee.Feature(f.get("sec"))
+        d = ee.Number(sec.get("dist_m"))
         zone = ee.Algorithms.If(d.lt(a), "A", ee.Algorithms.If(d.lt(bb), "B", "C"))
         c = f.geometry().centroid(1).coordinates()
-        return (f.set({"sec_id": ee.Feature(f.get("sec")).get("sec_id"), "zone": zone,
-                       "lon": c.get(0), "lat": c.get(1)})
-                .select(["sec_id", "zone", "dist_m", "confidence", "area_in_meters", "lon", "lat"]))
+        return (f.set({
+            "sec_id": sec.get("sec_id"),
+            "dist_m": d,
+            "zone": zone,
+            "lon": c.get(0),
+            "lat": c.get(1)
+        }).select(["sec_id", "zone", "dist_m", "confidence", "area_in_meters", "lon", "lat"]))
 
-    return ee.FeatureCollection(joined).map(tag)
+    return ee.FeatureCollection(matched).map(tag)
 
 
 def yearly_presence(cfg: GeeConfig) -> ee.Image:
