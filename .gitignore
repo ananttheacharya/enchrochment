@@ -1,0 +1,34 @@
+# Satellite imagery rasters (each band TIFF is ~600MB, exceeding GitHub's 100MB limit)
+swath1_20NOV2025/
+swath2_20MAR2026/
+*.tif
+*.tiff
+
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Intermediate model outputs, weights, predictions
+output_v3/
+*.pth
+*.pt
+*.onnx
+*.npy
+*.npz
+
+# OS metadata
+desktop.ini
+Thumbs.db
+.DS_Store
